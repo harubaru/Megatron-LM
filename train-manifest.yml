@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: megatron-train-job-beeg
+spec:
+  template:
+    spec:
+      containers:
+      - name: neox-train
+        image: harubaru1/megatron:1
+        imagePullPolicy: IfNotPresent
+        command: ["bash", "-c", "/app/Megatron-LM/pretrain_beeg.sh"]
+        tty: true
+        volumeMounts:
+          - name: gpt-storage
+            mountPath: /mnt/gpt-storage
+        resources:
+          requests:
+            cpu: 32
+            memory: 512Gi
+            nvidia.com/gpu: 8
+          limits:
+            cpu: 32
+            memory: 512Gi 
+            nvidia.com/gpu: 8
+      volumes:
+        - name: gpt-storage
+          persistentVolumeClaim:
+            claimName: gpt-storage
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/region
+                operator: In
+                values: 
+                - LAS1
+              - key: gpu.nvidia.com/class
+                operator: In
+                values:
+                - A100_NVLINK_80GB
+      restartPolicy: Never
+  backoffLimit: 2
