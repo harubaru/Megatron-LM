@@ -7,13 +7,17 @@ spec:
     spec:
       containers:
       - name: neox-train
-        image: harubaru1/megatron:1
+        image: harubaru1/megatron:3
         imagePullPolicy: IfNotPresent
-        command: ["bash", "-c", "/app/Megatron-LM/pretrain_beeg.sh"]
+        command: ["bash", "-c", "cd /app/Megatron-LM && ./pretrain_beeg.sh"]
         tty: true
+        securityContext:
+          runAsUser: 0
         volumeMounts:
           - name: gpt-storage
             mountPath: /mnt/gpt-storage
+          - name: dshm
+            mountPath: /dev/shm
         resources:
           requests:
             cpu: 32
@@ -27,6 +31,9 @@ spec:
         - name: gpt-storage
           persistentVolumeClaim:
             claimName: gpt-storage
+        - emptyDir:
+            medium: Memory
+          name: dshm
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
